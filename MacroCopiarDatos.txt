@@ -1,0 +1,102 @@
+Sub CopiarHojaACarpetas()
+    
+    '[[Copiar nuevos datos desde excel BASE]]
+    
+    Dim libroOrigen As Workbook
+    Dim libroDestino As Workbook
+    Dim hojaOrigen As Worksheet
+    Dim hojaDestino As Worksheet
+    Dim ultimaFila As Long
+    Dim ultimaFilaDestino As Long
+    Dim ultimaColumnaOrigen As Long
+    Dim rangoOrigen As Range
+    Dim rangoDestino As Range
+    Dim ExcelApp As Application
+    
+    
+    Set ExcelApp = New Excel.Application
+    ExcelApp.DisplayAlerts = False
+    
+    Set libroOrigen = Workbooks.Open(ThisWorkbook.Path & "\BASE_2023.xlsx")
+    
+    Set libroDestino = ThisWorkbook
+       
+    
+    Set hojaOrigen = libroOrigen.Worksheets("Hoja1")
+    
+    Set hojaDestino = libroDestino.Worksheets("Hoja1")
+    
+    '----------
+    
+    ultimaFila = hojaOrigen.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    Set rangoOrigen = hojaOrigen.Range("A2:W2" & ultimaFila)
+    
+    ultimaFila = hojaDestino.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    Set rangoDestino = hojaDestino.Range("A" & ultimaFila + 1)
+    
+    rangoOrigen.Copy rangoDestino
+   
+   
+    ActiveWorkbook.Save
+       
+    
+    libroOrigen.Close
+
+    '[[Copiar Hoja en cada Excel nuevo]]
+
+    
+    Dim HojaACopiar As Worksheet
+    Set HojaACopiar = ThisWorkbook.Sheets("Hoja1")
+    Dim RutaCarpeta As Object
+    Dim carpetaActual As String
+    Dim NombreArchivo As String
+    Dim FSO As Object
+    Dim ArchivoExcel As Object
+    Dim LibroCopia As Workbook
+    Dim LibroPegado As Workbook
+    Dim CopiaHoja As Worksheet
+    Dim fileExcel As Object
+    Dim archivosExcel() As String
+    Dim folderPath As String
+    
+    folderPath = ThisWorkbook.Path
+
+    
+    'Definir la ruta del libro
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    Set RutaCarpeta = FSO.GetFolder(ThisWorkbook.Path)
+    Set folder = FSO.GetFolder(folderPath)
+    
+    ReDim archivosExcel(1 To folder.Files.Count)
+    Dim i As Long
+    i = 1
+    
+    Set LibroCopia = ThisWorkbook
+    Set hojaOrigen = LibroCopia.Worksheets("Hoja1")
+    
+    'Recorrer cada file en cada Subcarpeta para su modificación
+    For Each SubCarpeta In RutaCarpeta.SubFolders
+        For Each file In SubCarpeta.Files
+            If Right(file.Name, 5) = ".xlsx" Then
+                archivosExcel(i) = file.Name
+                
+                Set LibroPegado = Workbooks.Open(file.Path)
+                Set CopiaHoja = LibroPegado.Worksheets("BASE")
+                
+                'Copia la hoja del archivo principal, borra la antigua, cambia nombre a la nueva
+                hojaOrigen.Copy after:=CopiaHoja
+                Sheets("BASE").Delete
+                Sheets("Hoja1").Name = "BASE"
+                
+                LibroPegado.Close True
+            End If
+        Next file
+    Next SubCarpeta
+            
+    ExcelApp.Quit
+    
+    MsgBox "Se ha copiado la hoja en todos los archivos de Excel de la carpeta."
+    
+End Sub
